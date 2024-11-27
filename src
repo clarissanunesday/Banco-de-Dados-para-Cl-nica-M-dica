@@ -1,0 +1,123 @@
+-- Verifique se o banco de dados já existe, e se sim, use ele. Caso contrário, crie o banco de dados.
+DROP DATABASE IF EXISTS ClinicaMedica;
+CREATE DATABASE ClinicaMedica;
+USE ClinicaMedica;
+
+-- Criação da tabela Pacientes
+CREATE TABLE IF NOT EXISTS Paciente (
+    id_paciente INT AUTO_INCREMENT PRIMARY KEY,  -- Identificador único do paciente
+    nome VARCHAR(150) NOT NULL,                  -- Nome do paciente
+    telefone VARCHAR(15),                        -- Telefone do paciente
+    data_nascimento DATE NOT NULL                -- Data de nascimento do paciente
+);
+
+-- Criação da tabela Médicos
+CREATE TABLE IF NOT EXISTS Medico (
+    id_medico INT AUTO_INCREMENT PRIMARY KEY,   -- Identificador único do médico
+    nome VARCHAR(150) NOT NULL,                  -- Nome do médico
+    especialidade VARCHAR(100) NOT NULL         -- Especialidade do médico
+);
+
+-- Criação da tabela Consultas
+CREATE TABLE IF NOT EXISTS Consulta (
+    id_consulta INT AUTO_INCREMENT PRIMARY KEY, -- Identificador único da consulta
+    id_paciente INT NOT NULL,                   -- ID do paciente
+    id_medico INT NOT NULL,                     -- ID do médico
+    data_consulta DATETIME NOT NULL,            -- Data e hora da consulta
+    valor DECIMAL(10, 2) NOT NULL,              -- Valor da consulta
+    FOREIGN KEY (id_paciente) REFERENCES Paciente(id_paciente) ON DELETE CASCADE,  -- Relacionamento com Paciente
+    FOREIGN KEY (id_medico) REFERENCES Medico(id_medico) ON DELETE CASCADE        -- Relacionamento com Médico
+);
+
+-- Criação da tabela Receitas
+CREATE TABLE IF NOT EXISTS Receita (
+    id_receita INT AUTO_INCREMENT PRIMARY KEY,  -- Identificador único da receita
+    id_consulta INT NOT NULL,                   -- ID da consulta
+    descricao_medicamentos TEXT NOT NULL,       -- Descrição dos medicamentos receitados
+    FOREIGN KEY (id_consulta) REFERENCES Consulta(id_consulta) ON DELETE CASCADE   -- Relacionamento com Consulta
+);
+
+-- Inserção de dados fictícios para Pacientes (8 pacientes)
+INSERT INTO Paciente (nome, telefone, data_nascimento)
+VALUES
+    ('Ana Souza', '1234567890', '1985-05-12'),
+    ('Carlos Pereira', '2345678901', '1990-08-25'),
+    ('Fernanda Lima', '3456789012', '1982-03-19'),
+    ('Juliana Costa', '4567890123', '1995-07-10'),
+    ('Ricardo Oliveira', '5678901234', '1988-12-30'),
+    ('Tatiane Rocha', '6789012345', '1980-06-22'),
+    ('Leandro Martins', '7890123456', '1992-02-15'),
+    ('Patricia Alves', '8901234567', '1986-11-02');
+
+-- Inserção de dados fictícios para Médicos (4 médicos)
+INSERT INTO Medico (nome, especialidade)
+VALUES
+    ('Dr. João Silva', 'Cardiologia'),
+    ('Dra. Maria Oliveira', 'Pediatria'),
+    ('Dr. Carlos Souza', 'Ortopedia'),
+    ('Dra. Fernanda Costa', 'Ginecologia');
+
+-- Inserção de dados fictícios para Consultas (10 consultas)
+INSERT INTO Consulta (id_paciente, id_medico, data_consulta, valor)
+VALUES
+    (1, 1, '2024-11-15 09:00:00', 200.00),
+    (2, 2, '2024-11-16 10:00:00', 180.00),
+    (3, 3, '2024-11-17 11:00:00', 220.00),
+    (4, 4, '2024-11-18 12:00:00', 250.00),
+    (5, 1, '2024-11-19 14:00:00', 210.00),
+    (6, 2, '2024-11-20 15:00:00', 190.00),
+    (7, 3, '2024-11-21 16:00:00', 230.00),
+    (8, 4, '2024-11-22 17:00:00', 240.00),
+    (1, 2, '2024-11-23 09:00:00', 185.00),
+    (2, 3, '2024-11-24 10:00:00', 225.00);
+
+-- Inserção de dados fictícios para Receitas (5 receitas)
+INSERT INTO Receita (id_consulta, descricao_medicamentos)
+VALUES
+    (1, 'Medicamento A, Medicamento B'),
+    (2, 'Medicamento C, Medicamento D'),
+    (3, 'Medicamento E, Medicamento F'),
+    (4, 'Medicamento G, Medicamento H'),
+    (5, 'Medicamento I, Medicamento J');
+
+-- Consulta 1: Listar todas as consultas realizadas por um médico específico (por exemplo, Dr. João Silva)
+SELECT 
+    p.nome AS paciente,
+    c.data_consulta,
+    c.valor
+FROM 
+    Consulta c
+JOIN 
+    Paciente p ON c.id_paciente = p.id_paciente
+JOIN 
+    Medico m ON c.id_medico = m.id_medico
+WHERE 
+    m.nome = 'Dr. João Silva'
+ORDER BY 
+    c.data_consulta;
+
+-- Consulta 2: Exibir os medicamentos receitados para um paciente (por exemplo, paciente 'Ana Souza')
+SELECT 
+    r.descricao_medicamentos
+FROM 
+    Receita r
+JOIN 
+    Consulta c ON r.id_consulta = c.id_consulta
+JOIN 
+    Paciente p ON c.id_paciente = p.id_paciente
+WHERE 
+    p.nome = 'Ana Souza';
+
+-- Consulta 3: Mostrar o total de consultas e receita gerada por especialidade médica
+SELECT 
+    m.especialidade,
+    COUNT(c.id_consulta) AS total_consultas,
+    SUM(c.valor) AS total_receita
+FROM 
+    Consulta c
+JOIN 
+    Medico m ON c.id_medico = m.id_medico
+GROUP BY 
+    m.especialidade
+ORDER BY 
+    total_receita DESC;
